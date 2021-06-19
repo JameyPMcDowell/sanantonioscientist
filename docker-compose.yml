@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  website:
+    build: .
+    command: >
+      gunicorn 
+      -c "python:config.gunicorn" 
+      --reload 
+      "sanantonioscientist.app:create_app()"
+    environment:
+      PYTHONBUFFERED: 'true'
+    volumes:
+      - '.:/sanantonioscientist'
+    ports:
+      - '8000:8000'

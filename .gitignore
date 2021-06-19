@@ -1,0 +1,5 @@
+*__pycache__*
+.env
+instance/settings.py
+.vscode/*
+.devcontainer/*
