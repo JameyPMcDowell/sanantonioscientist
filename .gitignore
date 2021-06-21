@@ -5,3 +5,4 @@ instance/settings.py
 .devcontainer/*
 *-dist*/*
 *DS-store
+fontawesome*/*
