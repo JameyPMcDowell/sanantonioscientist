@@ -3,3 +3,5 @@
 instance/settings.py
 .vscode/*
 .devcontainer/*
+*-dist*/*
+*DS-store
