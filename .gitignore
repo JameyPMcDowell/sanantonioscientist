@@ -4,5 +4,5 @@ instance/settings.py
 .vscode/*
 .devcontainer/*
 *-dist*/*
-*DS-store
+*DS_store
 fontawesome*/*
