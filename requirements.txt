@@ -8,3 +8,6 @@ gunicorn
 pytest
 pytest-cov
 flake8
+
+# Extensions
+flask-debugtoolbar
