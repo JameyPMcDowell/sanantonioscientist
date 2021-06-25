@@ -3,7 +3,6 @@ import pytest
 from sanantonioscientist.app import create_app
 
 
-
 @pytest.fixture(scope='session')
 def app():
     """
@@ -13,7 +12,7 @@ def app():
     -------
     flask.app.Flask
         An instance of our flask app
-    """    
+    """
     params = {
         'DEBUG': False,
         'TESTING': True
@@ -29,6 +28,7 @@ def app():
 
     ctx.pop()
 
+
 @pytest.fixture(scope='function')
 def client(app):
     """
@@ -38,7 +38,7 @@ def client(app):
     ----------
     app : flask.app.Flask
         Pytest fixture
-    
+
     Yields
     -------
     flask.testing.FlaskClient

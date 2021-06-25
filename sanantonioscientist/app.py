@@ -14,7 +14,7 @@ def create_app(settings_override=None):
     -------
     flask.app.Flask
         An instance of our flask app
-    """    
+    """
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_object('config.settings')
@@ -22,7 +22,7 @@ def create_app(settings_override=None):
 
     if settings_override:
         app.config.update(settings_override)
-    
+
     app.register_blueprint(page)
 
     return app
