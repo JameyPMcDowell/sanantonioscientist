@@ -5,3 +5,7 @@ instance/settings.py
 *-dist*/*
 *DS_store
 fontawesome*/*
+
+# pytest coverage reports
+cov/*
+.coverage
