@@ -12,5 +12,6 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY . .
+RUN pip install --editable .
 
 CMD gunicorn -c "python:config.gunicorn" "sanantonioscientist.app:create_app()"
