@@ -18,5 +18,6 @@ def cli(path):
     int
         Shell exit code
     """
-    cmd = f'python -m pytest sanantonioscientist --cov-report html:cov --cov {path}'
+    cmd = 'python -m pytest sanantonioscientist --cov-report html:cov ' + \
+        f'--cov {path}'
     return subprocess.call(cmd, shell=True)
