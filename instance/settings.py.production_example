@@ -2,3 +2,12 @@
 VCS."""
 
 DEBUG = False
+
+SERVER_NAME = 'sanantonioscientist.com'
+SECRET_KEY = 'generateastrong128chartoken'
+
+MAIL_USERNAME = 'me@realemailaccount.com'
+MAIL_PASSWORD = 'bestpasswordever'
+
+CELERY_BROKER_URL = 'redis://:amuchmoresecurepassword@redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://:amuchmoresecurepassword@redis:6379/0'
