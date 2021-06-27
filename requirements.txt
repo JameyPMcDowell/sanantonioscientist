@@ -9,5 +9,14 @@ pytest
 pytest-cov
 flake8
 
+# Data and workers
+redis
+celery
+
+# Forms
+Flask-WTF
+WTForms-Components
+
 # Extensions
 flask-debugtoolbar
+Flask-Mail
