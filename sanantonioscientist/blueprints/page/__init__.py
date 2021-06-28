@@ -1,1 +1,1 @@
-from sanantonioscientist.blueprints.page.views import page
+from .views import page
