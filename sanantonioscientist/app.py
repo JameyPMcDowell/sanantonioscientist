@@ -3,6 +3,7 @@ from celery import Celery
 
 from sanantonioscientist.blueprints.page import page
 from sanantonioscientist.blueprints.contact import contact
+from sanantonioscientist.blueprints.data_upload import data_upload
 from sanantonioscientist.extensions import debug_toolbar, mail, csrf
 
 CELERY_TASK_LIST = [
@@ -55,6 +56,7 @@ def create_app(settings_override=None):
 
     app.register_blueprint(page)
     app.register_blueprint(contact)
+    app.register_blueprint(data_upload)
     extensions(app)
 
     return app
