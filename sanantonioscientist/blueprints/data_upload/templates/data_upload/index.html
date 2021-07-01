@@ -1,0 +1,30 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form.html' as f with context %}
+
+{% block title %}Upload your dataset for modeling{% endblock %}
+{% block meta_description %}Contact our customer service department for help 
+using the tool.{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <h1>Upload a datafile</h1>
+      <hr>
+      {% call f.form_tag('data_upload.index') %}
+        
+        {% call f.form_group(form.dataset, css_class='margin-bottom', 
+                             placeholder='Dataset File') %}
+        {% endcall %}
+        {% call f.form_group(form.description, css_class='margin-bottom', 
+                             placeholder='Problem Description') %}
+        {% endcall %}
+        
+        <button type="submit" class="btn btn-primary">Upload</button>
+      {% endcall %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
