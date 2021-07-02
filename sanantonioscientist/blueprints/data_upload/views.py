@@ -9,6 +9,7 @@ data_upload = Blueprint(
 )
 
 
+# TODO: use Flask-Uploads package
 @data_upload.route('/data_upload', methods=['GET', 'POST'])
 def index():
     form = UploadForm()
