@@ -1,44 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html leng="en">
   <head>
+    <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <meta name="description"
           content="{% block meta_description %}{% endblock %}">
-
+    <meta name="author" content="James McDowell">
     <title>{% block title %}{% endblock %}</title>
-
-    <link
+    <!-- Bootstrap CSS -->
+    <link 
       rel="stylesheet"
-      href="{{ url_for('static', filename='styles/vendor/bootstrap.min.css') }}">
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <!-- Custom CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='styles/main.css') }}">
+    <!-- Font Awesome CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='styles/vendor/font-awesome.min.css') }}">
-    <script src="https://code.jquery.com/jquery-1.12.2.min.js"
-            integrity="sha256-lZFHibXzMHo3GGeehn1hudTAP3Sc0uKXBXAzHX1sjtk="
-            crossorigin="anonymous"></script>
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed"
-                  data-toggle="collapse" data-target="#navbar"
-                  aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a href="{{ url_for('page.home') }}">
-            <img src="{{ url_for('static', filename='images/san_antonio.jpeg') }}"
-                 class="img-responsive"
-                 width="120" height="60" title="San Antonio Scientist" alt="San Antonio Scientist"/>
-          </a>
+    <nav class="navbar navbar-expand-md navbar-dark navbar-fixed-top bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">San Antonio Scientist</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample04" aria-controls="navbarsExample04" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarsExample04">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('page.home') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('contact.index') }}">Contact</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link active dropdown-toggle" href="#" id="dropdown04" data-bs-toggle="dropdown" aria-expanded="false">Project Design</a>
+              <ul class="dropdown-menu" aria-labelledby="dropdown04">
+                <li><a class="dropdown-item" href="{{ url_for('blogs.microservice_intro') }}">The Case for Microservices</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('blogs.docker_intro') }}">Docker</a></li>
+              </ul>
+            </li>
+          </ul>
+          <form>
+            <input class="form-control" type="text" placeholder="Search" aria-label="Search">
+          </form>
         </div>
       </div>
     </nav>
@@ -52,15 +62,14 @@
       <div class="container">
         <ul class="list-inline">
           <li class="text-muted">San Antonio Scientist &copy; 2021</li>
-          <li><a href="{{ url_for('contact.index') }}">Contact</a></li>
           <li><a href="{{ url_for('page.privacy') }}">Privacy Policy</a></li>
           <li><a href="{{ url_for('page.terms') }}">Terms of Service</a></li>
         </ul>
       </div>
     </footer>
-
-    <script
-      src="{{ url_for('static', filename='scripts/vendor/bootstrap.min.js') }}">
-    </script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" 
+            crossorigin="anonymous"></script>
   </body>
 </html>

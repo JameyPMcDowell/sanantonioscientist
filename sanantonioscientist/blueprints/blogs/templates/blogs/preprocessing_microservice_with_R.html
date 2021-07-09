@@ -1,0 +1,242 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Preprocessing Microservice{% endblock %}
+{% block heading %}<h2>Preprocessing Microservice</h2>{% endblock %}
+
+{% block body %}
+<h3 id="r-with-rstudio-in-container">R with RStudio in Container</h3>
+<p>This is the first installment of the microservice series.</p>
+<p>Let's first play around with the R image itself.  For our data manipulation, rather than installing <code>tidyverse</code> and <code>R</code> ourselves, we can just use an image that already knows both.</p>
+<p>Rocker/tidyverse on Dockerhub contains both R and tidyverse preinstalled, as well as RStudio itself.</p>
+<p>To launch a container built off this image, we run the following:</p>
+<p><code>docker run rocker/tidyverse</code></p>
+<p>You'll see the following error message:</p>
+<pre><code><code><div>ERROR: You must set a unique PASSWORD (not 'rstudio') first! e.g. run with:
+docker run -e PASSWORD=&lt;YOUR_PASS&gt; -p 8787:8787 rocker/rstudio
+</div></code></code></pre>
+<p>Note that this assumes we were running the <code>rstudio</code> rocker image.  This is because their tidyverse image, is built off of their rstudio image.  Inspect the rstudio image here:</p>
+<p><a href="https://github.com/rocker-org/rocker-versioned/blob/master/rstudio/README.html">https://github.com/rocker-org/rocker-versioned/blob/master/rstudio/README.md</a></p>
+<p>Note that the image publishes RStudio in a browser within the container at port 8787.  By adding <code>-p 8787:8787</code> to our run command, we map the container's port 8787 to our local host 8787.  This is what lets us open up RStudio in our browser.  Navigate to <code>localhost:8787</code> in your browser, and you'll see RStudio running inside your container.  The username is rstudio.  Note that we could have used <code>-p 1000:8787</code>, we would then just have to navigate to <code>localhost:1000</code> instead to access RStudio.  Left of the colon is the host port.</p>
+<p>The run command also requires us to add <code>-e PASSWORD=some_password</code>.  This passes an environment variable to our run command.</p>
+<p>Make the adjustments as follows, and launch:
+<code>docker run -p 8787:8787 -e PASSWORD=my_password rocker/tidyverse</code></p>
+<p>Use CTRL+c to close the container.</p>
+<p>Note that inside of RStudio, we don't see any files.  This is because we haven't used either a mount or a volume to link files on our host machine, to the filesystem in the container.  We will cover this in the next microservice section.</p>
+<h3 id="r-preprocessing-microservice">R Preprocessing Microservice</h3>
+<p>Often, data scientists execute a query once on a table to get a training dataset that is then shared between team members.  This is opposed to having to execute the query each time more training data enters into the database, which can often cause headaches if there are things like data issues in the new data.</p>
+<p>This lets team members focus on modeling, before dealing with minutia in ETL jobs.</p>
+<p>Assume we have a static dataset directly resulting from a query on a table, that all data scientists on a team will be using for training and evaluation.  This file represents the output of what will ultimately become the ETL microservice.</p>
+<p>Note that when we go to production, we might want to rotate to a more concise data store such as a parquet file.  But for now, assume this is a csv file.</p>
+<p>At this point in the project, let us assume the following directory structure:</p>
+<pre><code><code><div>micro_demo
+│   .env
+│   .docker-compose.yml
+│
+└───data
+│       raw.csv
+│
+└───preprocessing
+        main.R
+        preprocessing_functions.R
+</div></code></code></pre>
+<p>Our <code>.env</code> file will contain things like database passwords that might need to be used across services.</p>
+<p>Our <code>raw.csv</code> file in this example will be the diamonds dataset found here:
+<a href="https://www.kaggle.com/shivam2503/diamonds">https://www.kaggle.com/shivam2503/diamonds</a></p>
+<p>Go ahead and download the dataset and drop it into your data directory for this demo with the name raw.csv.</p>
+<p>Our goal for our containers, is for them to have as few files inside of them as possible.  Eventually, we will expand our project to include our python models, our R Shiny dashboards, and our ETL code.  But from the perspective of preprocessing, all our microservice needs to know, are the files in the preprocessing directory, as well as the files in the data directory.</p>
+<p>We will be using <code>tidyverse</code> for our data manipulation, and we will need to create a named volume for our data directory for our service.</p>
+<p>Our <code>docker-compose.yml</code> file will be responsible to creating this volume.  The purpose of our <code>docker-compose.yml</code> is to define our different services, how to build them, which volumes they should use, and in which order our services should execute.</p>
+<p>For now, let us set up <code>docker-compose.yml</code> for our preprocessing microservice.</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+</div></code></code></pre>
+<p>From the root directory of the application (micro_demo/), run <code>docker compose up</code>.  This will launch preprocessing.  Note that we receive the same errors around passwords and ports that we did when we executed <code>docker run rocker/tidyverse</code>.  The fix was to specify port and password in the <code>docker run</code> command, so we switched to:</p>
+<p><code>docker run -p 8787:8787 -e PASSWORD=my_password rocker/tidyverse</code></p>
+<p>We need our <code>docker-compose.yml</code> file to pass these same arguments into the docker run command.</p>
+<p>We do this by editing <code>docker-compose.yml</code> as follows:</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+    ports:
+      - '8787:8787'
+    environment:
+      - PASSWORD=my_password
+</div></code></code></pre>
+<p>Verify that you can visit <code>localhost:8787</code> for RStudio.  Note inside of here, that the file explorer sets us by default in the home directory.  If we want to access our files on our local system, within our container, we must use either mounts or named volumes.  In this instance, we will be using both.</p>
+<p>Recall that multiple services will need access to the data directory.  We use a named volume for these files, so that other services will be able to see and use the same datasets.</p>
+<p>Our other microservices do not need access to our .R scripts, however.  Therefore we use a bind mount to get these files into our container, since they will not need to be accessed by other services.</p>
+<p>Let us first upload our .R scripts using a mount.</p>
+<p>We will make <code>functions.R</code> as follows for now:</p>
+<pre><code><code><div>library(tidyverse)
+</div></code></code></pre>
+<p>Our <code>main.R</code> will simply source our functions script:</p>
+<pre><code><code><div>source(&quot;preprocessing_functions.R&quot;)
+</div></code></code></pre>
+<p>When we try to execute these lines from inside RStudio Server, we will be able to check two things:</p>
+<ol>
+<li>Is tidyverse installed in my R system</li>
+<li>Can my main R script import functions from its sister scripts</li>
+</ol>
+<p>If we were to do this directly using <code>docker run</code>, we would have to run the following command, from our project root directory:</p>
+<p><code>docker run -p 8787:8787 -e PASSWORD=my_password --mount type=bind,source=&quot;$(pwd)&quot;/preprocessing,target=/home/rstudio/ rocker/tidyverse</code></p>
+<p>Run this command and go to <code>localhost:8787</code>.  You should see both <code>main.R</code> and <code>preprocessing_functions.R</code> in RStudio's file explorer.  This is because we told Docker that we wanted all contents of our <code>micro_demo/preprocessing/</code> directory, to go into the <code>/home/rstudio/</code> directory of our Docker container.</p>
+<p>Since we don't want to have to memorize this ridiculously long command, we can use <code>docker-compose.yml</code> to store this bind mount information for us.  Now, our <code>docker-compose.yml</code> should look like the following:</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+    ports:
+      - '8787:8787'
+    environment:
+      - PASSWORD=my_password
+    volumes:
+      - ./preprocessing:home/rstudio
+</div></code></code></pre>
+<p>Now go to the root directory of the application, and launch <code>docker compose up</code>.  Verify that everything works by going to <code>localhost:8787</code> in your browser, and verify that both <code>main.R</code> and <code>preprocessing_functions.R</code> are present in the file explorer.</p>
+<p><strong>Technical Section</strong></p>
+<p>Note that even tho the keyword in the compose file is 'volumes', we are actually creating a bind mount.  This is super confusing, just know that what we actually made was a bind mount.</p>
+<p>Also notice that we didn't have to use <code>$(pwd)</code>, but rather were able to use relative paths, when we were in our <code>docker-compose.yml</code>.  This is only possible in compose files.  Relative directories are unavailable to the <code>docker run</code> command.</p>
+<p><strong>End Technical</strong></p>
+<p>At this point, we have our bind mount that puts all our .R scripts into our container.</p>
+<p>We still haven't solved the problem of creating a data volume.  If we were to create a data volume and add it to our microservice, without using docker compose, we would have to use the following commands:</p>
+<ol>
+<li><code>docker volume create micro_demo_data</code>
+<ul>
+<li>This creates an empty volume for us named <code>micro_demo_data</code></li>
+</ul>
+</li>
+<li><code>docker run -d --rm --name dummy -v micro_demo_data:/root alpine tail -f /dev/null</code>
+<ul>
+<li>This creates a dummy container for us, that has the new volume mounted to the root directory of the dummy container</li>
+</ul>
+</li>
+<li><code>docker cp $(pwd)/data/* dummy:/root</code>
+<ul>
+<li>This copies over the contents of our data directory, to the root of the dummy container, which in this case is mapped to the <code>micro_demo_data</code> volume.</li>
+</ul>
+</li>
+</ol>
+<p>Now, we add the newly created data volume to our R microservice, alongside the mount point:</p>
+<p><code>docker run -p 8787:8787 -e PASSWORD=my_password --mount type=bind,source=&quot;$(pwd)&quot;/preprocessing,target=/home/rstudio/ -v micro_demo_data:/home/rstudio/data rocker/tidyverse</code></p>
+<p>When we navigate to <code>localhost:8787</code>, we see that there exists a data directory inside of our microservice.  If we go to click on it, however, we see that we do not have access to the directory.  To fix this, we need to provide the UID of our host into the USERID environment field to give it access to the local host volume.  This is rocker image issue, not a Docker issue, and will not have to be included in non-R microservices.</p>
+<p><code>docker run -p 8787:8787 -e PASSWORD=my_password -e USERID=$UID --mount type=bind,source=&quot;$(pwd)&quot;/preprocessing,target=/home/rstudio/ -v micro_demo_data:/home/rstudio/data rocker/tidyverse</code></p>
+<p><strong>There is an easier way.</strong></p>
+<p>Compose makes this much simpler for us.</p>
+<p>First we will delete the volume produced in the previous demo with pure docker run commands.</p>
+<p><code>docker volume rm micro_demo_data</code></p>
+<p>If this fails, remove all containers referencing the volume, then remove the volume itself.</p>
+<p>Within our <code>docker-compose.yml</code> file, we can make a named volume just known to the application as 'data'.</p>
+<p>This is the volume seen underneath the 'volumes' keyword at the bottom of yml file.</p>
+<p>We then point this volume to where we want its contents to go within our preprocessing microservices.  We put the volume at /home/rstudio/data so that we can easily access it from RStudio's file explorer.</p>
+<p>We again need to add the USERID environment variable.  To get your UID, type <code>echo $UID</code> in the terminal to get the value.  Then supply that value as an environment variable.  We will later pass this value in through our <code>.env</code> file.  Docker compose does not have access to shell variables, which is why we cannot use the $UID variable itself.</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+    user: 'root'
+    ports:
+      - '8787:8787'
+    environment:
+      - PASSWORD=my_password
+      - USERID=502
+    volumes:
+      - ./preprocessing:/home/rstudio
+      - 'data:/home/rstudio/data'
+
+volumes:
+  data:
+</div></code></code></pre>
+<p>We then launch our microservice by using the command <code>docker compose up --build</code>, which will build our data volume, pass in environment variables, and expose ports based on our yml file.</p>
+<p>Open <code>localhost:8787</code> and navigate to the data directory.  You will notice that the data directory is once again empty.  We need a way to pass our <code>raw.csv</code> file into this data directory so that other applications can use it.</p>
+<p>We can either use RStudio's 'upload' button, or we can execute <code>docker cp</code> to copy the file into the data volume.</p>
+<p>To use <code>docker cp</code>, we would execute the following:
+<code>docker cp data/raw.csv micro_demo_preprocessing_1:/home/rstudio/data</code></p>
+<p>This copies the raw csv file from our host system, to the data directory of our container.  Because this data directory is linked to our data volume, this uploads the csv to our host volume.</p>
+<p>To see the host volume, type <code>docker volume ls</code>.  You should see a volume named <code>micro_demo_data</code>, which now houses our csv file.</p>
+<p>At this point we are ready to build out the actual R code of our microservice.  For this demo, preprocessing will be simple.  We will import the raw dataset, drop the first column, and dump the remaining dataset to a file named <code>processed.csv</code>.  Here is <code>preprocessing_functions.R</code>:</p>
+<pre><code><code><div>library(tidyverse)
+
+drop_X1_column &lt;- function(data){
+  filtered_data &lt;- data %&gt;%
+    select(-X1)
+  return(filtered_data)
+}
+</div></code></code></pre>
+<p>Here is <code>main.R</code>:</p>
+<pre><code><code><div>source(&quot;preprocessing_functions.R&quot;)
+
+df &lt;- read_csv('data/raw.csv')
+
+processed_df &lt;- drop_X1_column(df)
+
+write_csv(processed_df, 'data/processed.csv')
+</div></code></code></pre>
+<p>Now we need our container to actually execute the <code>main.R</code> script.</p>
+<p>If we were to manually launch our script, we would start up a shell inside the container itself as follows:</p>
+<p><code>docker compose run preprocessing sh</code></p>
+<p>From here, we can launch the script through the following two steps:</p>
+<ol>
+<li><code>cd /home/rstudio</code></li>
+<li><code>Rscript main.R</code></li>
+</ol>
+<p>When we go to production, we want this step to execute automatically.</p>
+<p>To do so, we need our microservice to navigate to the <code>/home/rstudio</code> directory, then execute the <code>Rscript main.R</code> script.</p>
+<p>To do so, we make the following edits to <code>docker-compose.yml</code>:</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+    working_dir: /home/rstudio
+    ports:
+      - '8787:8787'
+    environment:
+      - PASSWORD=my_password
+      - USERID=502
+    command: 'Rscript main.R'
+    volumes:
+      - ./preprocessing:/home/rstudio
+      - 'data:/home/rstudio/data'
+
+volumes:
+  data:
+</div></code></code></pre>
+<p>Now run <code>docker compose run preprocessing sh</code> to drop into a shell in the container.  If you type <code>pwd</code>, note that you're now in the <code>/home/rstudio</code> directory, rather than the root directory of the container.</p>
+<p>Navigate to the data directory, and if you have a <code>raw.csv</code> file here, go ahead and run <code>rm raw.csv</code> so we can test preprocessing with docker compose directly.</p>
+<p>Exit your running container by typing <code>exit</code>.  Then from the root of your repository, execute:</p>
+<p><code>docker compose run preprocessing</code></p>
+<p>This should run your entire microservice from end-to-end.  Congratulations on finishing your first microservice!!</p>
+<p>Note that the <code>command</code> entry of our Dockerfile, overrode the command to launch RStudio Server.  To continue editing the scripts from within RStudio Server, leave the <code>command</code> line commented to default to the Studio Server init from <code>rocker/rstudio</code>'s Dockerfile.</p>
+<p>For security, let's remove our password and USERID from the compose file, and load them into our separate .env at the base of our repo.</p>
+<p>We can do this by adding the following lines to our <code>.env</code> file at the root of our project:</p>
+<pre><code><code><div>RSTUDIO_PASSWORD=some_awesome_password
+UID=502  # change this to your UID
+</div></code></code></pre>
+<p>We use these values in our final <code>docker-compose.yml</code> for our preprocessing microservice:</p>
+<pre><code><code><div>version: '3'
+
+services:
+  preprocessing:
+    image: rocker/tidyverse
+    working_dir: /home/rstudio
+    ports:
+      - '8787:8787'
+    environment:
+      - PASSWORD=${RSTUDIO_PASSWORD}
+      - USERID=${UID}
+    command: &quot;Rscript main.R&quot;
+    volumes:
+      - ./preprocessing:/home/rstudio
+      - 'data:/home/rstudio/data'
+
+volumes:
+  data:
+</div></code></code></pre>
+{% endblock %}

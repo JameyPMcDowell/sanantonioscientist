@@ -2,7 +2,9 @@ from flask import Flask
 from celery import Celery
 
 from sanantonioscientist.blueprints.page import page
+from sanantonioscientist.blueprints.blogs import blogs
 from sanantonioscientist.blueprints.contact import contact
+from sanantonioscientist.blueprints.project import project
 from sanantonioscientist.blueprints.data_upload import data_upload
 from sanantonioscientist.extensions import debug_toolbar, mail, csrf
 
@@ -55,6 +57,7 @@ def create_app(settings_override=None):
         app.config.update(settings_override)
 
     app.register_blueprint(page)
+    app.register_blueprint(blogs)
     app.register_blueprint(contact)
     app.register_blueprint(data_upload)
     extensions(app)
