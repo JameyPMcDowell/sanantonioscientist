@@ -1,0 +1,73 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Microservice Purpose{% endblock %}
+{% block heading %}<h2>Why Does It Matter?</h2>{% endblock %}
+
+{% block body %}
+  <p>
+    Data science is full of grey area.  In larger corporations, one team 
+    manages databases, one team handles ETL, one builds the model, and another 
+    runs the visualization server.  Then an architect is reponsible for 
+    deploying the entire system into production in the cloud.  
+  </p>
+  <p>These teams combine their codebases into a single monolithic data 
+    science codebase.  At smaller shops, the unicorn data scientist might end up
+    performing each of these tasks by herself.
+  </p>
+  <p>
+    When outlier predictions inevitably occur, diagnosing such a system can 
+    become difficult.
+  </p>
+  <ul>
+    <li>Was our model overfit?</li>
+    <li>Did pandas preprocessing code break?</li>
+    <li>Did something break in the ETL?</li>
+    <li>Did bad data enter into the database?</li>
+  </ul>
+  <p>Unless you know that the answer to each of these questions is a definitive "no", your business partners will never be able to trust outlier predictions and extract business value when your outlier prediction was right!</p>
+  <p> Suppose it was a bug.  Without knowing the entire system, diagnostics become difficult, especially as different team members provide different enhancements to individual phases within the project. </p> 
+  What was easy to manage during prototyping, has become untenable
+    in a production system.  And worse, the developers who build the initial
+    monolithic application are necessarily needed to perform debugging when
+    issues happen in batch, which prevents them from working on new projects.
+  </p>
+  <p>
+    When they leave the company, their monolithic application becomes difficult 
+    if not impossible to debug, let alone enhance, by other team members.
+  </p>
+  <h3>Enter Microservices</h3>
+  <p>
+    Microservices fundamentally break down the monolithic service into
+    individual services.  In data science projects, the
+    following microservices typically suffice:
+  </p>
+  <ul>
+    <li>Querying/ETL</li>
+    <li>Preprocessing</li>
+    <li>Modeling</li>
+    <li>Exporting</li>
+    <li>Visualization</li>
+  </ul>
+  <p>
+    By using <bold>Docker</bold> and <bold>Docker Compose</bold>, each of these
+    services can operate with individual interpretters.  This is invaluable
+    for data projects because it allows interpretter choices to exist at the
+    microservice level rather than across the entire code base.
+  </p>
+  <p>
+    This allows you to switch from Teradata to Postgres.  From pandas to Spark.
+    From python statsmodels to R tidymodels.  And from Tableau to R Shiny. 
+    Enhancements can be made on a service-by-service basis.  This
+    freedom to assess competitive advantage at the microservice level also 
+    enables team members to collaborate across languages.  If one data
+    scientist likes python and another likes R, why not use both?
+  </p>
+  <h3>What Next?</h3>
+  <p>
+    If you're interested in swapping to a microservices-first deployment, follow along as we build an application from the ground up using unit tests, Docker, and Docker Compose:
+    <li><a href="{{ url_for('blogs.docker_intro') }}">Why Docker</a></li>
+    <li><a href="{{ url_for('blogs.preprocessing_microservice_with_r') }}">Preprocessing Microservice with R</a></li>
+    <li>Integration Tests</li>
+  </p>
+  <small class="text-muted">July 21, 2021</small>
+{% endblock %}

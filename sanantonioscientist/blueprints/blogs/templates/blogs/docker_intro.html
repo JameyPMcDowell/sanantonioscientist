@@ -1,0 +1,56 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Why Docker{% endblock %}
+{% block heading %}<h2>The Case for Docker</h2>{% endblock %}
+
+{% block body %}
+<p>Docker should not be hard for data science.  Most docker guides are aimed at web development rather than for python or R applications.</p>
+<p>The reason we will use Docker for our microservices is because it encourages us to keep individual processes small, rather than drifting to monolithic implementations.</p>
+<p>At the end of the day, Docker is just a tool to set up a lightweight linux interpretter that has as few files as possible.</p>
+<p>These running interpretters are known as containers.  A docker image contains the instructions to build these containers.  These images can be downloaded from Docker Hub, which is Docker's image registry.</p>
+<h2 id="verify-docker-installation">Verify Docker Installation</h2>
+<p>Verify Docker works.  Go to Command Line and execute:</p>
+<p><code>docker --version</code></p>
+<p>As of the time of writing, this returns:</p>
+<p><code>Docker version 20.10.7, build f0df350</code></p>
+<h2 id="build-your-first-container">Build Your First Container</h2>
+<p>Run your first python image.  Go to command line and type:</p>
+<code>
+docker run -it python:3.8
+</code>
+<p>This command does three things:</p>
+<ol>
+<li>Check if python:3.8 image exists locally.  If not, download from DockerHub.</li>
+<li>Run a container from the image.</li>
+<li>Execute the ['CMD'] portion of the Dockerfile.</li>
+</ol>
+<p>Dockerfiles are the instruction files for building a given container.  You can write your own Dockerfile for an application, or just use one directly pulled from Docker Hub.</p>
+<p>The python:3.8 Dockerfile can be found on GitHub here:
+<a href="https://github.com/docker-library/python/blob/dbf2083938bd54ddb0f8697c177d5ccfc927f20f/3.8/buster/Dockerfile">https://github.com/docker-library/python/blob/dbf2083938bd54ddb0f8697c177d5ccfc927f20f/3.8/buster/Dockerfile</a></p>
+<p>We can see that the Dockerfile for python:3.8 has the associated CMD of 'python3'.  This means that when we run the image in interactive mode (the -it flag), we will be inside the python interpretter within the container.</p>
+<p>To instead enter the container with sh, we call:</p>
+<code>
+docker run -it python:3.8 sh
+</code>
+<p>This drops us into the command line of the container.  Inside of this container, we can launch python by simply typing 'python'.  We also have access to pip.</p>
+<p>Note that this container contains no files from your local system.  It is up to us to get our application files into the container so that we can run them through our interpretter.  There are three ways to do this.</p>
+<ol>
+<li>Volumes</li>
+<li>Mounts</li>
+<li>'Copy' statements in Dockerfile</li>
+</ol>
+<h3 id="define-your-microservices">Define Your Microservices</h3>
+<p>Different components of the application likely have different dependencies.  For this example, we define four broad microservices:</p>
+<ol>
+<li>ETL</li>
+<li>Preprocessing</li>
+<li>Modeling</li>
+<li>Dashboards</li>
+</ol>
+<p>Each of our four microservices will operate within their own container.  This means they can be run with completely different interpretters.  ETL might use Spark or pure SQL, Preprocessing might use R Tidyverse, modeling might use python with scikit-learn, and dashboarding might use R Shiny.</p>
+<p>These can be scheduled and executed independently from one another.  For this example, we assume that ETL runs daily.  We assume that preprocessing and modeling occur once a week.  And we assume that the dashboard service is continually available.</p>
+<p>Our ETL will rely on using Selenium to perform a webscrape for us in python.  Our Preprocessing will use R Tidyverse.  Our Modeling will use TPOT with python.  And our Dashboarding will use R Tidyverse.</p>
+<h3 id="define-shared-locations">Define Shared Locations</h3>
+<p>Let us assume that all our microservices will need to share some files.  For this example, let us assume that the ETL drops a file into a data directory.  The preprocessing service operates on this file.  The modeling service imports the preprocessed file and then dumps predictions to the same data directory.  And finally, the dashboard unionizes the predictions with the predictors and publishes visualizations based on this dataset to a server.</p>
+<p>Because our microservices will all need access to this directory, we will use a Docker named volume that stores all this information for us.  We will demonstrate how to upload data into a named volume in the first microservice, which uses R for preprocessing.</p>
+{% endblock %}
